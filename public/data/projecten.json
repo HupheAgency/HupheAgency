@@ -1,0 +1,16 @@
+{
+  "projects": [
+    {
+      "id": 1,
+      "name": "Campagne Jongeren & AI",
+      "status": "In behandeling",
+      "briefing": "Bedenk een creatieve campagne die jongeren bewust maakt van de kracht en gevaren van AI."
+    },
+    {
+      "id": 2,
+      "name": "Contentserie 'Het Nieuwe Normaal'",
+      "status": "In idee-fase",
+      "briefing": "Bedenk een contentserie (social, reels, blogs) die inspeelt op hoe AI ons dagelijks leven verandert."
+    }
+  ]
+}
