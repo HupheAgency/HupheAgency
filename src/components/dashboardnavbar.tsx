@@ -1,7 +1,7 @@
 "use client";
 
-import { supabase } from "@/lib/supabaseClient";
-import { useAuth } from "@/context/AuthProvider";
+import { supabase } from "@/lib/clients/supabaseClient";
+import { useSupabase } from "@/context/supabase-context";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useEffect, useState, useRef } from "react";
@@ -14,24 +14,37 @@ import {
   LogOut,
 } from "lucide-react";
 
+// ✅ buiten de component zodat hij niet gereset wordt bij re-render
+let didJustLogout = false;
+
 export default function DashboardNavbar() {
   const router = useRouter();
   const [userEmail, setUserEmail] = useState("");
   const [showMenu, setShowMenu] = useState(false);
   const timeoutRef = useRef<NodeJS.Timeout | null>(null);
-  const { user, loading } = useAuth();
+
+  const { supabase, session } = useSupabase();
 
   useEffect(() => {
-    if (!loading && !user) {
+    if (session === undefined) return; // Wacht tot session geladen is
+
+    const currentPath = window.location.pathname;
+
+    if (session === null && currentPath.startsWith("/dashboard")) {
+      if (didJustLogout) {
+        didJustLogout = false;
+        return;
+      }
       router.push("/login");
-    } else if (user) {
-      setUserEmail(user.email);
+    } else if (session) {
+      setUserEmail(session.user?.email ?? "");
     }
-  }, [user, loading]);
+  }, [session, router]);
 
   const handleLogout = async () => {
+    didJustLogout = true;
     await supabase.auth.signOut();
-    router.push("/");
+    router.push("/"); // direct naar homepage
   };
 
   const handleMouseEnter = () => {
@@ -48,14 +61,13 @@ export default function DashboardNavbar() {
       <div className="text-lg font-bold text-black">📂 Huphe Dashboard</div>
 
       <div className="flex gap-6 text-gray-700 text-sm items-center">
-        <Link href="/new-project" className="hover:text-black">
+        <Link href="/dashboard/briefing" className="hover:text-black">
           Nieuw project
         </Link>
-        <Link href="/projects" className="hover:text-black">
+        <Link href="/dashboard/projects" className="hover:text-black">
           Projecten
         </Link>
 
-        {/* Account dropdown (hover-stabiel) */}
         <div
           className="relative"
           onMouseEnter={handleMouseEnter}
@@ -65,7 +77,6 @@ export default function DashboardNavbar() {
             <User size={20} />
           </button>
 
-          {/* Hover buffer */}
           <div className="absolute top-full left-0 w-full h-2" />
 
           {showMenu && (

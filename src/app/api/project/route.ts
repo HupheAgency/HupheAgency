@@ -3,8 +3,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { createSupabaseServerClient } from "@/lib/supabaseServerClient";
 
 export async function POST(req: NextRequest) {
-  const supabase = createSupabaseServerClient(req.headers);
-
+  const supabase = createSupabaseServerClient(); // ✅ GEEN param doorgeven
   const {
     data: { user },
     error: authError,

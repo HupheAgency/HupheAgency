@@ -5,23 +5,9 @@ import { useEffect, useState } from "react";
 export default function ChatPage() {
   const [messages, setMessages] = useState<string[]>([]);
   const [input, setInput] = useState("");
-  const [usage, setUsage] = useState<number | null>(null); // 👈 nieuw
+  const [usage, setUsage] = useState<number | null>(null);
+  const [readyForDebrief, setReadyForDebrief] = useState(false); // ✅ Nieuw toegevoegd
 
-  // 👇 Usage ophalen bij laden
-  /* useEffect(() => {
-    const fetchUsage = async () => {
-      const res = await fetch("/api/usage");
-      const data = await res.json();
-      if (res.ok) {
-        setUsage(data.usageInDollars); // ← verwacht een veld uit jouw /api/usage/route.ts
-      } else {
-        console.error("❌ Usage ophalen mislukt:", data.error);
-      }
-    };
-
-    fetchUsage();
-  }, []);
-*/
   const sendMessage = async () => {
     if (!input.trim()) return;
 
@@ -42,8 +28,19 @@ export default function ChatPage() {
     }
 
     const data = await response.json();
-    setMessages((prev) => [...prev, `🤖 Accountmanager: ${data.response}`]);
+    const aiMessage = data.response ?? "⚠️ Geen reactie van de AI.";
+
+    setMessages((prev) => [...prev, `🤖 Accountmanager: ${aiMessage}`]);
     setInput("");
+
+    // ✅ Check of Claire aangeeft klaar te zijn voor debrief
+    if (
+      aiMessage.toLowerCase().includes("zal ik een samenvatting geven") ||
+      aiMessage.toLowerCase().includes("zal ik een debrief genereren") ||
+      aiMessage.toLowerCase().includes("hier is de samenvatting")
+    ) {
+      setReadyForDebrief(true);
+    }
   };
 
   return (
@@ -73,6 +70,16 @@ export default function ChatPage() {
           </p>
         ))}
       </div>
+
+      {readyForDebrief && (
+        <button
+          onClick={() => alert("➡️ Ga naar debriefpagina")}
+          className="bg-green-600 text-white px-4 py-2 rounded mb-4"
+        >
+          Genereer debrief
+        </button>
+      )}
+
       <div className="flex gap-2">
         <input
           type="text"

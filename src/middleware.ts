@@ -1,0 +1,46 @@
+import { createServerClient } from "@supabase/ssr";
+import { NextResponse } from "next/server";
+import type { NextRequest } from "next/server";
+import type { Database } from "@/types/supabase";
+
+export async function middleware(req: NextRequest) {
+  const res = NextResponse.next();
+
+  const supabase = createServerClient<Database>(
+    process.env.NEXT_PUBLIC_SUPABASE_URL!,
+    process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
+    {
+      cookies: {
+        get: (name) => req.cookies.get(name)?.value,
+        set: (name, value, options) => {
+          res.cookies.set(name, value, options);
+          return res;
+        },
+        remove: (name, options) => {
+          res.cookies.set(name, "", { ...options, maxAge: -1 });
+          return res;
+        },
+      },
+    }
+  );
+
+  const {
+    data: { session },
+  } = await supabase.auth.getSession();
+
+  const isLoggedIn = !!session;
+  const isOnDashboard = req.nextUrl.pathname.startsWith("/dashboard");
+  const isOnLoginPage = req.nextUrl.pathname === "/login";
+
+  if (!isLoggedIn && isOnDashboard) {
+    const loginUrl = req.nextUrl.clone();
+    loginUrl.pathname = "/login";
+    return NextResponse.redirect(loginUrl);
+  }
+
+  return res;
+}
+
+export const config = {
+  matcher: ["/dashboard/:path*", "/api/:path*"],
+};

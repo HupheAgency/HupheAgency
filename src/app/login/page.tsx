@@ -1,20 +1,23 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState } from "react";
 import { useRouter } from "next/navigation";
-import { supabase } from "@/lib/supabaseClient";
+import { supabase } from "@/lib/clients/supabaseClient";
 import Navbar from "@/components/navbar";
 
 export default function LoginPage() {
+  const router = useRouter();
+
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [error, setError] = useState("");
+  const [loading, setLoading] = useState(false);
   const [showEmailForm, setShowEmailForm] = useState(false);
-  const router = useRouter();
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setError("");
+    setLoading(true);
 
     const { error } = await supabase.auth.signInWithPassword({
       email,
@@ -23,21 +26,26 @@ export default function LoginPage() {
 
     if (error) {
       setError("Ongeldige inloggegevens");
+      setLoading(false);
     } else {
-      router.push("/briefing");
+      router.push("/dashboard/projects");
     }
   };
 
   const handleOAuthLogin = async (provider: "google" | "discord") => {
+    setError("");
+    setLoading(true);
+
     const { error } = await supabase.auth.signInWithOAuth({
       provider,
       options: {
-        redirectTo: `${window.location.origin}/briefing`, // belangrijk!
+        redirectTo: `${window.location.origin}/auth/callback`,
       },
     });
 
     if (error) {
       setError(`Probleem met ${provider} login`);
+      setLoading(false);
     }
   };
 
@@ -51,6 +59,7 @@ export default function LoginPage() {
           <button
             onClick={() => handleOAuthLogin("google")}
             className="w-full mb-3 p-2 border border-gray-300 rounded hover:bg-gray-100 flex items-center justify-center"
+            disabled={loading}
           >
             <span className="mr-2">🔍</span> Inloggen met Google
           </button>
@@ -58,6 +67,7 @@ export default function LoginPage() {
           <button
             onClick={() => handleOAuthLogin("discord")}
             className="w-full mb-3 p-2 border border-gray-300 rounded hover:bg-gray-100 flex items-center justify-center"
+            disabled={loading}
           >
             <span className="mr-2">💬</span> Inloggen met Discord
           </button>
@@ -91,8 +101,9 @@ export default function LoginPage() {
               <button
                 type="submit"
                 className="bg-black text-white py-2 px-4 rounded w-full"
+                disabled={loading}
               >
-                Login
+                {loading ? "Even geduld..." : "Inloggen"}
               </button>
             </form>
           )}

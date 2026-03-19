@@ -1,18 +1,21 @@
 console.log("🧱 Layout geladen");
 
 import type { Metadata } from "next";
-import { Geist, Geist_Mono } from "next/font/google";
+import { Inter } from "next/font/google";
 import "./globals.css";
 import { Providers } from "./providers";
+import dynamic from "next/dynamic";
+import { SupabaseProvider } from "@/context/supabase-context"; // ✅ toegevoegde regel
 
-const geistSans = Geist({
-  variable: "--font-geist-sans",
-  subsets: ["latin"],
-});
+// Dynamic import voorkomt hydration issues
+const UserSessionProvider = dynamic(
+  () => import("@/components/UserSessionProvider"),
+  { ssr: false }
+);
 
-const geistMono = Geist_Mono({
-  variable: "--font-geist-mono",
+const inter = Inter({
   subsets: ["latin"],
+  variable: "--font-inter",
 });
 
 export const metadata: Metadata = {
@@ -25,10 +28,15 @@ export default function RootLayout({
 }: Readonly<{ children: React.ReactNode }>) {
   return (
     <html lang="en">
-      <body
-        className={`${geistSans.variable} ${geistMono.variable} antialiased`}
-      >
-        <Providers>{children}</Providers>
+      <body className={`${inter.variable} antialiased`}>
+        <Providers>
+          <SupabaseProvider>
+            {" "}
+            {/* ✅ FIX: voeg Supabase context toe */}
+            <UserSessionProvider />
+            {children}
+          </SupabaseProvider>
+        </Providers>
       </body>
     </html>
   );

@@ -1,8 +1,7 @@
 "use client";
 
-import AuthProvider from "@/context/AuthProvider";
+import { SupabaseProvider } from "@/context/supabase-context";
 
 export function Providers({ children }: { children: React.ReactNode }) {
-  console.log("✅ Providers component is gerenderd");
-  return <AuthProvider>{children}</AuthProvider>;
+  return <SupabaseProvider>{children}</SupabaseProvider>;
 }

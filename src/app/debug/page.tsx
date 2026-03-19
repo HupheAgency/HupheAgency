@@ -1,6 +1,6 @@
 "use client";
 
-import { useAuth } from "@/context/AuthProvider";
+import { useAuth } from "@/context/AuthProvider-old";
 
 export default function DebugPage() {
   const { user, loading } = useAuth();

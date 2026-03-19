@@ -1,14 +1,53 @@
-// app/api/projects/route.ts
+// src/app/api/projects/route.ts
 import { NextRequest, NextResponse } from "next/server";
-import { createSupabaseServerClient } from "@/lib/supabaseServerClient";
+import { createSupabaseRouteClient } from "@/lib/clients/supabaseRouteClient";
 
+// ✅ POST = Project aanmaken
 export async function POST(req: NextRequest) {
-  console.log("🚀 /api/projects POST route aangeroepen");
+  try {
+    console.log("📡 [POST] /api/projects aangeroepen");
 
-  const supabase = createSupabaseServerClient(req); // ✅ CORRECT
-  const { title, status = "Actief" } = await req.json();
+    const supabase = createSupabaseRouteClient();
+    const { title, status = "Actief" } = await req.json();
+    console.log("📥 Request body:", { title, status });
 
-  console.log("📦 Gegevens uit request body:", { title, status });
+    const {
+      data: { user },
+      error: authError,
+    } = await supabase.auth.getUser();
+
+    if (authError || !user) {
+      console.error("❌ [POST] Geen geldige sessie:", authError?.message);
+      return NextResponse.json(
+        { error: authError?.message ?? "Niet ingelogd" },
+        { status: 401 }
+      );
+    }
+
+    const { data, error: insertError } = await supabase
+      .from("projects")
+      .insert([{ title, status, user_id: user.id }])
+      .select()
+      .single();
+
+    if (insertError) {
+      console.error("❌ [POST] Insert fout:", insertError.message);
+      return NextResponse.json({ error: insertError.message }, { status: 500 });
+    }
+
+    console.log("✅ [POST] Project succesvol aangemaakt:", data);
+    return NextResponse.json({ data });
+  } catch (err: any) {
+    console.error("❌ [POST] Onverwachte fout:", err.message ?? err);
+    return NextResponse.json({ error: "Interne serverfout" }, { status: 500 });
+  }
+}
+
+// ✅ GET = Projecten ophalen
+export async function GET() {
+  console.log("📡 [GET] /api/projects aangeroepen");
+
+  const supabase = createSupabaseRouteClient();
 
   const {
     data: { user },
@@ -16,27 +55,23 @@ export async function POST(req: NextRequest) {
   } = await supabase.auth.getUser();
 
   if (authError || !user) {
-    console.error("❌ Auth fout:", authError?.message);
-    return NextResponse.json(
-      { error: authError?.message || "Not authenticated" },
-      { status: 401 }
-    );
+    console.warn("⚠️ [GET] Auth error:", authError?.message ?? "No user");
+    return NextResponse.json({ error: "Niet ingelogd" }, { status: 401 });
   }
 
-  console.log("✅ Ingelogde gebruiker:", user.id);
+  console.log("🧠 [GET] Gebruiker:", user.id);
 
-  const { data, error } = await supabase
+  const { data: projects, error: fetchError } = await supabase
     .from("projects")
-    .insert([{ title, status, user_id: user.id }])
-    .select()
-    .single();
+    .select("*")
+    .eq("user_id", user.id)
+    .order("created_at", { ascending: false });
 
-  if (error) {
-    console.error("❌ Insert fout:", error.message);
-    return NextResponse.json({ error: error.message }, { status: 500 });
+  if (fetchError) {
+    console.error("❌ [GET] Projecten ophalen mislukt:", fetchError.message);
+    return NextResponse.json({ error: fetchError.message }, { status: 500 });
   }
 
-  console.log("✅ Project aangemaakt:", data);
-
-  return NextResponse.json({ data });
+  console.log(`✅ [GET] ${projects.length} projecten opgehaald`);
+  return NextResponse.json({ projects });
 }
