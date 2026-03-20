@@ -1,9 +1,9 @@
 "use client";
 
-import { useAuth } from "@/context/AuthProvider-old";
+import { useSupabase } from "@/context/supabase-context";
 
 export default function DebugPage() {
-  const { user, loading } = useAuth();
+  const { user, loading } = useSupabase();
 
   if (loading) return <p>🔄 Bezig met laden...</p>;
 

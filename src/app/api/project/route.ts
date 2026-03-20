@@ -1,9 +1,9 @@
 // src/app/api/project/route.ts
 import { NextRequest, NextResponse } from "next/server";
-import { createSupabaseServerClient } from "@/lib/supabaseServerClient";
+import { supabaseServerClient } from "@/lib/clients/supabaseServerClient";
 
 export async function POST(req: NextRequest) {
-  const supabase = createSupabaseServerClient(); // ✅ GEEN param doorgeven
+  const supabase = supabaseServerClient(); // ✅ GEEN param doorgeven
   const {
     data: { user },
     error: authError,
